@@ -2,6 +2,7 @@
   "name": "orders",
   "version": "1.0.0",
   "scripts": {
+    "start:auth": "cd apps/auth && npm install && npm run start:dev",
     "build:auth": "cd apps/auth && npm install && npm run build",
     "build:orders": "cd apps/orders && npm install && npm run build"
   },

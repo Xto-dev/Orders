@@ -1,6 +1,17 @@
 version: "3.8"
 
 services:
+  postgres-auth:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
   auth:
     build:
       context: ./apps/auth
@@ -8,6 +19,11 @@ services:
       - "3000:3000"
     environment:
       - PORT=3000
+      - JWT_SECRET=my-super_jwt_secret_key
+      - DATABASE_URL=postgresql://auth_user:auth_pass@postgres-auth:5432/auth_db?schema=public
+    depends_on:
+      - postgres-auth
+    command: sh -c "npm run wait-for-db && npm run start:prod"
   orders:
     build:
       context: ./apps/orders
@@ -15,3 +31,5 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
+volumes:
+  postgres_auth_data:
