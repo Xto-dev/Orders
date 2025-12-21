@@ -34,5 +34,8 @@ jobs:
       - name: Build Auth Docker Image
         run: docker build -t auth-service ./apps/auth
 
+      - name: Build orders service
+        run: npm run build:orders
+
       - name: Build Orders Docker Image
         run: docker build -t orders-service ./apps/orders
