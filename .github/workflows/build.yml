@@ -1,8 +1,9 @@
-name: Build Docker Images
+name: Build Auth Service
 
 on:
   push:
     branches: [ main ]
+  pull_request:
 
 jobs:
   build:
@@ -12,19 +13,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.jobs
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
+          cache: npm
 
-      - name: Install root dependencies
-        run: npm install
+      - name: Install root dependencies (optional, if using workspaces)
+        run: npm ci
 
-      - name: Build Auth Service
+      - name: Install auth service dependencies
+        run: cd apps/auth && npm ci
+
+      - name: Generate Prisma Client for auth
+        run: cd apps/auth && npx prisma generate
+
+      - name: Build auth service
         run: npm run build:auth
-
-      - name: Build Orders Service
-        run: npm run build:orders
 
       - name: Build Auth Docker Image
         run: docker build -t auth-service ./apps/auth
