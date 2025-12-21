@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  auth:
+    build:
+      context: ./apps/auth
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+  orders:
+    build:
+      context: ./apps/orders
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001

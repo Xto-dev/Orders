@@ -1,0 +1,33 @@
+name: Build Docker Images
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.jobs
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Build Auth Service
+        run: npm run build:auth
+
+      - name: Build Orders Service
+        run: npm run build:orders
+
+      - name: Build Auth Docker Image
+        run: docker build -t auth-service ./apps/auth
+
+      - name: Build Orders Docker Image
+        run: docker build -t orders-service ./apps/orders
