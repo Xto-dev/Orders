@@ -10,8 +10,8 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(username: string, password: string) {
-    const user = await this.prisma.user.findUnique({ where: { username } });
+  async validateUser(email: string, password: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
     if (user && await bcrypt.compare(password, user.password)) {
       const { password, ...result } = user;
       return result;
@@ -20,22 +20,23 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { username: user.username, sub: user.id };
+    const payload = { email: user.email, sub: user.id };
     return { access_token: this.jwtService.sign(payload) };
   }
 
-  async register(username: string, password: string) {
+  async register(email: string, username: string, password: string) {
     const hashedPassword = await bcrypt.hash(password, 10);
+    const validEmail = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(email);
+    if (!validEmail) {
+      throw new Error('Invalid email format');
+    }
     try {
       const user = await this.prisma.user.create({
-        data: { username, password: hashedPassword },
+        data: { email, username, password: hashedPassword },
       });
       const { password: _, ...result } = user;
       return result;
     } catch (e) {
-      if (e.code === 'P2002') {
-        throw new Error('Username already taken');
-      }
       throw e;
     }
   }

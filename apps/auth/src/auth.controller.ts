@@ -13,12 +13,12 @@ export class AuthController {
     if (!registerDto.username || !registerDto.password || registerDto.password.length < 6) {
       throw new BadRequestException('Username and password (min 6 chars) required');
     }
-    return this.authService.register(registerDto.username, registerDto.password);
+    return this.authService.register(registerDto.email, registerDto.username, registerDto.password);
   }
 
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
-    const user = await this.authService.validateUser(loginDto.username, loginDto.password);
+    const user = await this.authService.validateUser(loginDto.email, loginDto.password);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
