@@ -12,6 +12,50 @@ services:
       - "5432:5432"
     volumes:
       - postgres_auth_data:/var/lib/postgresql/data
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    ports:
+      - "9092:9092"
+    environment:
+      CLUSTER_ID: "lTuBTo6dRsmhZsMctCsS-A"
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: PLAINTEXT://:29092,PLAINTEXT_HOST://:9092,CONTROLLER://:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LOG_DIRS: "/tmp/kafka-logs"
+  init-kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - kafka
+    command: >
+      /bin/bash -c "/usr/bin/kafka-topics --create --bootstrap-server kafka:29092 --topic user-events --partitions 1 --replication-factor 1 --if-not-exists && echo '✅ Топик user-events создан'"
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+  email:
+    build: ./apps/email
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - REDIS_URL=redis://redis:6379
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_PORT=587
+      - EMAIL_USER=your@gmail.com
+      - EMAIL_PASS=your_app_password
+    depends_on:
+      - kafka
+      - redis
+    command: sh -c "npm run wait-for-kafka && npm run start:prod"
   auth:
     build:
       context: ./apps/auth
