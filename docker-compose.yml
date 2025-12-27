@@ -1,17 +1,17 @@
 version: "3.8"
 
 services:
-  postgres-auth:
-    image: postgres:16-alpine
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
-      POSTGRES_DB: ${AUTH_DB_NAME}
+  traefik:
+    image: traefik:v3.6
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
     ports:
-      - "5432:5432"
+      - "80:80"
+      - "8080:8080"
     volumes:
-      - postgres_auth_data:/var/lib/postgresql/data
+      - /var/run/docker.sock:/var/run/docker.sock
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -33,12 +33,16 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: "/tmp/kafka-logs"
+    labels:
+      - "traefik.enable=false"
   init-kafka:
     image: confluentinc/cp-kafka:latest
+    labels:
+      - "traefik.enable=false"
     depends_on:
       - kafka
     command: >
-      /bin/bash -c "/usr/bin/kafka-topics --create --bootstrap-server kafka:29092 --topic user-events --partitions 1 --replication-factor 1 --if-not-exists && echo '✅ Топик user-events создан'"
+      /bin/bash -c "/usr/bin/kafka-topics --create --bootstrap-server kafka:29092 --topic user-events --partitions 1 --replication-factor 1 --if-not-exists"
   redis:
     image: redis:7-alpine
     ports:
@@ -50,21 +54,36 @@ services:
       - REDIS_URL=redis://redis:6379
       - EMAIL_HOST=smtp.gmail.com
       - EMAIL_PORT=587
-      - EMAIL_USER=your@gmail.com
-      - EMAIL_PASS=your_app_password
+      - EMAIL_USER=rdrsspprt@gmail.com
+      - EMAIL_APP_PASSWORD=agqqqoxdrvwslncb
+    labels:
+      - "traefik.enable=false"
     depends_on:
       - kafka
       - redis
     command: sh -c "npm run wait-for-kafka && npm run start:prod"
+  postgres-auth:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+      POSTGRES_DB: ${AUTH_DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
   auth:
     build:
       context: ./apps/auth
-    ports:
-      - "3000:3000"
     environment:
       - PORT=${AUTH_PORT}
       - JWT_SECRET=${AUTH_JWT_SECRET}
       - DATABASE_URL=${AUTH_DATABASE_URL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`api.auth.localhost`)"
+      - "traefik.http.services.auth.loadbalancer.server.port=3000"
     depends_on:
       - postgres-auth
     command: sh -c "npm run wait-for-db && npm run start:prod"
@@ -75,5 +94,14 @@ services:
       - "3001:3001"
     environment:
       - PORT=${ORDERS_PORT}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.orders.rule=PathPrefix(`/orders`)"
+      - "traefik.http.services.orders.loadbalancer.server.port=3001"
+  whoami:
+    image: traefik/whoami
+    labels:
+      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+
 volumes:
   postgres_auth_data:

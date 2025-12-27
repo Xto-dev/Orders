@@ -1,18 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from './prisma.service';
+import { ClientKafka } from '@nestjs/microservices';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    @Inject('KAFKA_SERVICE') private kafkaClient: ClientKafka,
   ) {}
 
   async validateUser(email: string, password: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (user && await bcrypt.compare(password, user.password)) {
+    if (user && await bcrypt.compare(password, user.password) && user.isEmailConfirmed) {
       const { password, ...result } = user;
       return result;
     }
@@ -30,14 +33,34 @@ export class AuthService {
     if (!validEmail) {
       throw new Error('Invalid email format');
     }
+
+    let user;
     try {
-      const user = await this.prisma.user.create({
+      user = await this.prisma.user.create({
         data: { email, username, password: hashedPassword },
       });
-      const { password: _, ...result } = user;
-      return result;
+      
     } catch (e) {
       throw e;
     }
+    
+    const eventId = `evt_${uuidv4()}`;
+    this.kafkaClient.emit('user-events', {
+      eventId,
+      event: 'user.registered',
+      userId: user.id,
+      email: user.email,
+    });
+
+    const { password: _, ...result } = user;
+    return result;
+  }
+
+  async confirmEmail(userId: string) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { isEmailConfirmed: true },
+    });
+    return user;
   }
 }
