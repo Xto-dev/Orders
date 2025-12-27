@@ -52,10 +52,10 @@ services:
     environment:
       - KAFKA_BROKER=kafka:29092
       - REDIS_URL=redis://redis:6379
-      - EMAIL_HOST=smtp.gmail.com
-      - EMAIL_PORT=587
-      - EMAIL_USER=rdrsspprt@gmail.com
-      - EMAIL_APP_PASSWORD=agqqqoxdrvwslncb
+      - EMAIL_HOST=${SMTP_HOST}
+      - EMAIL_PORT=${SMTP_PORT}
+      - EMAIL_USER=${SMTP_USER}
+      - EMAIL_APP_PASSWORD=${SMTP_PASSWORD}
     labels:
       - "traefik.enable=false"
     depends_on:
