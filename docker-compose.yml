@@ -47,15 +47,25 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+  scraper:
+    build: ./apps/scraper
+    environment:
+      KAFKA_BROKER: kafka:29092
+      SCRAPER_TIMEOUT: ${SCRAPER_TIMEOUT}
+      USER_AGENT: ${USER_AGENT}
+    labels:
+      - "traefik.enable=false"
+    depends_on:
+      - kafka
   email:
     build: ./apps/email
     environment:
-      - KAFKA_BROKER=kafka:29092
-      - REDIS_URL=redis://redis:6379
-      - EMAIL_HOST=${SMTP_HOST}
-      - EMAIL_PORT=${SMTP_PORT}
-      - EMAIL_USER=${SMTP_USER}
-      - EMAIL_APP_PASSWORD=${SMTP_PASSWORD}
+      KAFKA_BROKER: kafka:29092
+      REDIS_URL: redis://redis:6379
+      EMAIL_HOST: ${SMTP_HOST}
+      EMAIL_PORT: ${SMTP_PORT}
+      EMAIL_USER: ${SMTP_USER}
+      EMAIL_APP_PASSWORD: ${SMTP_PASSWORD}
     labels:
       - "traefik.enable=false"
     depends_on:
@@ -66,9 +76,10 @@ services:
     image: postgres:16-alpine
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_USER: ${AUTH_DB_USER}
       POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
       POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_DATABASE_URL: ${AUTH_DATABASE_URL}
     ports:
       - "5432:5432"
     volumes:
@@ -77,9 +88,9 @@ services:
     build:
       context: ./apps/auth
     environment:
-      - PORT=${AUTH_PORT}
-      - JWT_SECRET=${AUTH_JWT_SECRET}
-      - DATABASE_URL=${AUTH_DATABASE_URL}
+      PORT: ${AUTH_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${AUTH_DATABASE_URL}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth.rule=Host(`api.auth.localhost`)"
@@ -87,21 +98,32 @@ services:
     depends_on:
       - postgres-auth
     command: sh -c "npm run wait-for-db && npm run start:prod"
+  postgres-orders:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${ORDERS_DB_USER}
+      POSTGRES_PASSWORD: ${ORDERS_DB_PASSWORD}
+      POSTGRES_DB: ${ORDERS_DB_NAME}
+    ports:
+      - "5433:5433"
+    volumes:
+      - postgres_orders_data:/var/lib/postgresql/data
   orders:
     build:
       context: ./apps/orders
     ports:
       - "3001:3001"
     environment:
-      - PORT=${ORDERS_PORT}
+      PORT: ${ORDERS_PORT}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.orders.rule=PathPrefix(`/orders`)"
       - "traefik.http.services.orders.loadbalancer.server.port=3001"
-  whoami:
-    image: traefik/whoami
-    labels:
-      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+    depends_on:
+      - postgres-orders
+    command: sh -c "npm run wait-for-db && npm run start:prod"
 
 volumes:
   postgres_auth_data:
+  postgres_orders_data:
