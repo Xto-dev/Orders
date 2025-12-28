@@ -93,7 +93,7 @@ services:
       DATABASE_URL: ${AUTH_DATABASE_URL}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=Host(`api.auth.localhost`)"
+      - "traefik.http.routers.auth.rule=Host(`localhost.auth`)"
       - "traefik.http.services.auth.loadbalancer.server.port=3000"
     depends_on:
       - postgres-auth
@@ -118,7 +118,7 @@ services:
       PORT: ${ORDERS_PORT}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.orders.rule=PathPrefix(`/orders`)"
+      - "traefik.http.routers.orders.rule=PathPrefix(`localhost.orders`)"
       - "traefik.http.services.orders.loadbalancer.server.port=3001"
     depends_on:
       - postgres-orders
