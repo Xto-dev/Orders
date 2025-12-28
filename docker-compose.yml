@@ -116,6 +116,8 @@ services:
       - "3001:3001"
     environment:
       PORT: ${ORDERS_PORT}
+      DATABASE_URL: ${ORDERS_DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.orders.rule=PathPrefix(`localhost.orders`)"
