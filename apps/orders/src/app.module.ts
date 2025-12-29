@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
+import { PrismaService } from './prisma.service';
+import { JwtStrategy } from './auth/jwt.strategy';
 
 @Module({
   imports: [
@@ -24,6 +26,6 @@ import { OrdersService } from './orders.service';
     ]),
   ],
   controllers: [OrdersController],
-  providers: [OrdersService],
+  providers: [OrdersService, PrismaService, JwtStrategy],
 })
 export class AppModule {}

@@ -93,7 +93,7 @@ services:
       DATABASE_URL: ${AUTH_DATABASE_URL}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=Host(`localhost.auth`)"
+      - "traefik.http.routers.auth.rule=Host(`auth.localhost`)"
       - "traefik.http.services.auth.loadbalancer.server.port=3000"
     depends_on:
       - postgres-auth
@@ -109,6 +109,7 @@ services:
       - "5433:5433"
     volumes:
       - postgres_orders_data:/var/lib/postgresql/data
+    command: -p 5433
   orders:
     build:
       context: ./apps/orders
@@ -120,7 +121,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.orders.rule=PathPrefix(`localhost.orders`)"
+      - "traefik.http.routers.orders.rule=Host(`orders.localhost`)"
       - "traefik.http.services.orders.loadbalancer.server.port=3001"
     depends_on:
       - postgres-orders

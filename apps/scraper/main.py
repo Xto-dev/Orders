@@ -1,12 +1,22 @@
 import math
 import json
 import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 from kafka import KafkaConsumer, KafkaProducer
 import requests
 from bs4 import BeautifulSoup
 import os
 from dotenv import load_dotenv
 import logging
+
+options = Options()
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -45,17 +55,24 @@ producer = KafkaProducer(
 
 def scrape_price(url: str) -> float:
     try:
-        response = requests.get(url, headers={'User-Agent': user_agent}, timeout=timeout)
-        soup = BeautifulSoup(response.text, 'lxml')
-
-        price_div = soup.find('div', {'class': 'desc-big-price  ib'})
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        driver.get(url)
+        time.sleep(3)  # Wait for JavaScript to load content
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        
+        price_div = soup.select_one('div.desc-big-price.ib')
         if not price_div:
+            logger.info("No price found on the page.")
             return 0.0
         
         spans = price_div.find_all('span')
         min_price = math.inf
         for span in spans:
-            price = float(span.text.replace('$', '').strip())
+            text = span.text.replace('\xa0', '').replace(' ', '').replace('грн.', '').replace(',', '.').strip()
+            if text == '':
+                continue
+            
+            price = float(text)
             min_price = min(min_price, price)
 
         return min_price
