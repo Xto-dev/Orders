@@ -9,19 +9,16 @@ import { JwtStrategy } from './auth/jwt.strategy';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ClientsModule.registerAsync([
+    ClientsModule.register([
       {
         name: 'KAFKA_SERVICE',
-        useFactory: (config: ConfigService) => ({
-          transport: Transport.KAFKA,
-          options: {
-            client: {
-              brokers: [config.get('KAFKA_BROKER', 'kafka:29092')],
-              kafkaVersion: '3.7.0',
-            },
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'kafka-producer',
+            brokers: ['kafka:29092'],
           },
-        }),
-        inject: [ConfigService],
+        },
       },
     ]),
   ],

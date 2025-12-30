@@ -88,10 +88,12 @@ for msg in consumer:
         logger.info(f"Received task: {task}")
         url = task.get('url')
         request_id = task.get('requestId')
+        order_id = task.get('orderId')
         
         price = scrape_price(url)
         
         result = {
+            'orderId': order_id,
             'requestId': request_id,
             'url': url,
             'price': price,
