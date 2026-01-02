@@ -24,4 +24,13 @@ export class AuthController {
     }
     return this.authService.login(user);
   }
+
+  @Get('confirm')
+  async confirmEmail(@Request() req) {
+    const token = req.query.token;
+    if (!token) {
+      throw new BadRequestException('Confirmation token is required');
+    }
+    return this.authService.confirmEmail(token);
+  }
 }

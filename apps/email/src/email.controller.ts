@@ -13,4 +13,9 @@ export class EmailController {
       await this.mailer.sendConfirmationEmail(payload.email, payload.userId);
     }
   }
+
+  @EventPattern('price.dropped')
+  async handlePriceDrop(@Payload() payload: any) {
+    await this.mailer.sendPriceDropNotification(payload.email, payload.url, payload.price);
+  }
 }

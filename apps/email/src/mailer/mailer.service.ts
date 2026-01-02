@@ -22,8 +22,17 @@ export class MailerService implements OnModuleInit {
     await this.transporter.sendMail({
       from: process.env.EMAIL_USER,
       to,
-      subject: 'Подтвердите регистрацию',
-      text: `Перейдите по ссылке: ${confirmLink}`,
+      subject: 'Confirm your email',
+      text: `Click on the link: ${confirmLink}`,
+    });
+  }
+
+  async sendPriceDropNotification(to: string, url: string, price: number) {
+    await this.transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject: 'Price drop notification',
+      text: `The price of ${url} has dropped to ${price}.`,
     });
   }
 }
