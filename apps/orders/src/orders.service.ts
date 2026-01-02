@@ -50,7 +50,7 @@ export class OrdersService {
     });
 
     if (price <= order.targetPrice) {
-      this.kafkaClient.emit('user-events', {
+      this.kafkaClient.emit('orders-events', {
         event: 'price.dropped',
         userId: order.userId,
         email: email,

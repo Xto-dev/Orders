@@ -87,6 +87,7 @@ for msg in consumer:
         task = msg.value
         logger.info(f"Received task: {task}")
         url = task.get('url')
+        email = task.get('email')
         request_id = task.get('requestId')
         order_id = task.get('orderId')
         
@@ -95,6 +96,7 @@ for msg in consumer:
         result = {
             'orderId': order_id,
             'requestId': request_id,
+            'email': email,
             'url': url,
             'price': price,
             'status': 'completed' if price > 0 else 'failed'

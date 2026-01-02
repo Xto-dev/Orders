@@ -14,8 +14,10 @@ export class EmailController {
     }
   }
 
-  @EventPattern('price.dropped')
+  @EventPattern('orders-events')
   async handlePriceDrop(@Payload() payload: any) {
-    await this.mailer.sendPriceDropNotification(payload.email, payload.url, payload.price);
+    if (payload.event === 'price.dropped'){
+        await this.mailer.sendPriceDropNotification(payload.email, payload.url, payload.price);
+      }
   }
 }
