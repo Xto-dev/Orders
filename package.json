@@ -2,9 +2,9 @@
   "name": "orders",
   "version": "1.0.0",
   "scripts": {
-    "build:auth": "cd apps/auth && npm install && npm run build",
-    "build:email": "cd apps/email && npm install && npm run build",
-    "build:orders": "cd apps/orders && npm install && npm run build"
+    "build:auth": "cd apps/auth && npm run build",
+    "build:email": "cd apps/email && npm run build",
+    "build:orders": "cd apps/orders && npm run build"
   },
   "workspaces": ["apps/*"]
 }
