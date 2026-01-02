@@ -39,7 +39,6 @@ export class OrdersService {
       where: { id: orderId },
     });
 
-    console.log('Order found for scrape result:', order);
     if (!order) return;
 
     await this.prisma.order.update({

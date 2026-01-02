@@ -21,7 +21,6 @@ export class OrdersController {
 
   @MessagePattern('scrape-results')
   async handleScrapeResult(@Payload() result: any) {
-    console.log('Received scrape result:', result);
     if (result.status === 'completed') {
       await this.appService.handleScrapeResult(result);
     }
