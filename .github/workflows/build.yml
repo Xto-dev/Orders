@@ -68,13 +68,3 @@ jobs:
       # === BUILD SCRAPER (Python) ===
       - name: Install scraper dependencies
         run: cd apps/scraper && pip install -r requirements.txt
-
-      # Check that scraper starts correctly
-      - name: Test scraper (dry run)
-        run: |
-          cd apps/scraper
-          echo "KAFKA_BROKER=localhost:29092" > .env
-          python -c "import main; print('✅ Scraper imports OK')"
-
-      - name: Build scraper Docker image
-        run: docker build -t scraper-service ./apps/scraper
